@@ -12,6 +12,10 @@
     "start": "node server.js"
   },
   "dependencies": {
+    "@capacitor/android": "^8.5.1",
+    "@capacitor/core": "^8.5.1",
+    "@vitejs/plugin-react": "^4.0.0",
+    "autoprefixer": "^10.4.16",
     "axios": "^1.5.0",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
@@ -21,21 +25,20 @@
     "jwt-simple": "^0.5.6",
     "mongoose": "^7.3.1",
     "multer": "^1.4.5-lts.1",
+    "postcss": "^8.4.31",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.15.0",
     "socket.io": "^4.6.2",
     "socket.io-client": "^4.6.1",
+    "tailwindcss": "^3.3.0",
+    "vite": "^4.5.0",
     "zustand": "^4.4.1"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "^4.0.0",
-    "autoprefixer": "^10.4.16",
+    "@capacitor/cli": "^8.5.1",
     "concurrently": "^8.2.2",
     "mongodb-memory-server": "^11.2.0",
-    "nodemon": "^3.0.1",
-    "postcss": "^8.4.31",
-    "tailwindcss": "^3.3.0",
-    "vite": "^4.5.0"
+    "nodemon": "^3.0.1"
   }
 }

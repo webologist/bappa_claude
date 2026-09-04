@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Shivaji Nagar Ganesh Mandal</string>
+    <string name="title_activity_main">Shivaji Nagar Ganesh Mandal</string>
+    <string name="package_name">com.ganeshutsav.shivajinagar</string>
+    <string name="custom_url_scheme">com.ganeshutsav.shivajinagar</string>
+</resources>

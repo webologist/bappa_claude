@@ -1,0 +1,8 @@
+{
+  "appId": "com.ganeshutsav.shivajinagar",
+  "appName": "Shivaji Nagar Ganesh Mandal",
+  "webDir": "frontend/dist",
+  "server": {
+    "androidScheme": "https"
+  }
+}

@@ -47,7 +47,7 @@ function requirePortalAdmin(req, res, next) {
   if (!token) return res.status(401).json({ error: 'Missing authorization token' });
   try {
     const decoded = decodeValid(token);
-    const tenantSlug = req.params.tenantSlug;
+    const tenantSlug = (req.tenant && req.tenant.slug) || req.params.tenantSlug;
     if (decoded.role !== 'portal-admin' || decoded.tenantSlug !== tenantSlug) {
       return res.status(403).json({ error: 'Portal admin access required for this tenant' });
     }
@@ -63,7 +63,7 @@ function requireEndUser(req, res, next) {
   if (!token) return res.status(401).json({ error: 'Please verify your mobile number to continue' });
   try {
     const decoded = decodeValid(token);
-    const tenantSlug = req.params.tenantSlug;
+    const tenantSlug = (req.tenant && req.tenant.slug) || req.params.tenantSlug;
     if (decoded.role !== 'end-user' || decoded.tenantSlug !== tenantSlug) {
       return res.status(403).json({ error: 'Please verify your mobile number to continue' });
     }
