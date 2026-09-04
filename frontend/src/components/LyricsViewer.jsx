@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { PlayIcon, PauseIcon, ListIcon } from './Icons';
 import { getTheme } from '../themes';
+import { mediaUrl } from '../api/client';
 
 const LANGUAGES = [
   { key: 'marathi', label: 'मराठी' },
@@ -72,7 +73,7 @@ export default function LyricsViewer({ track, isPlaying, currentTime, duration, 
       <div className="flex items-center gap-3">
         {!collapsed && (
           track.thumbnailUrl ? (
-            <img src={track.thumbnailUrl} alt="" className="w-16 h-16 rounded-lg object-cover shadow-lg shrink-0" />
+            <img src={mediaUrl(track.thumbnailUrl)} alt="" className="w-16 h-16 rounded-lg object-cover shadow-lg shrink-0" />
           ) : (
             <div
               className="w-16 h-16 rounded-lg shadow-lg flex items-center justify-center text-2xl shrink-0"

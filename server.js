@@ -15,9 +15,10 @@ const tenantAdminRoutes = require('./routes/tenantAdmin');
 const portalRoutes = require('./routes/portal');
 const { apiLimiter } = require('./middleware/rateLimit');
 
-// Named SERVER_PORT (not PORT) so it doesn't collide with a platform-injected
-// PORT env var meant for whichever process is the public-facing one (here, Vite).
-const PORT = process.env.SERVER_PORT || 5000;
+// SERVER_PORT is for local dev, where Vite (not this server) owns the platform's
+// PORT var. In production this server IS the public-facing process, so fall back
+// to PORT — Railway (and most PaaS hosts) inject it and expect the app to bind there.
+const PORT = process.env.SERVER_PORT || process.env.PORT || 5000;
 const UPLOAD_DIR = process.env.UPLOAD_DIR || './uploads';
 const CORS_ORIGIN = (process.env.CORS_ORIGIN || 'http://localhost:5173').split(',').map(s => s.trim());
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { apiClient, authHeaders, errorMessage } from '../api/client';
+import { apiClient, authHeaders, errorMessage, mediaUrl } from '../api/client';
 import { useSocket } from '../hooks/useSocket';
 import { getTheme } from '../themes';
 import LyricsViewer from '../components/LyricsViewer';
@@ -100,7 +100,7 @@ function TopBar({ tenant, tenantSlug, theme, colorMode, onToggleColorMode }) {
   return (
     <header className="sticky top-0 z-30 bg-spotify-black/95 backdrop-blur px-4 py-3 flex items-center gap-3">
       {tenant.logoUrl ? (
-        <img src={tenant.logoUrl} alt={tenant.name} className="w-9 h-9 rounded-full object-cover shrink-0" />
+        <img src={mediaUrl(tenant.logoUrl)} alt={tenant.name} className="w-9 h-9 rounded-full object-cover shrink-0" />
       ) : (
         <div className="w-9 h-9 rounded-full flex items-center justify-center text-lg shrink-0" style={gradientStyle(theme)}>🙏</div>
       )}
@@ -301,7 +301,7 @@ function GalleryTab({ photos, onShare }) {
         <div className="flex flex-col gap-2">
           {photos.map((p) => (
             <div key={p._id} className="bg-spotify-dark2 rounded-lg p-2 flex items-center gap-3">
-              <img src={p.watermarkedImageUrl} alt={p.caption || 'Photo'} className="w-14 h-14 rounded object-cover shrink-0" />
+              <img src={mediaUrl(p.watermarkedImageUrl)} alt={p.caption || 'Photo'} className="w-14 h-14 rounded object-cover shrink-0" />
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-spotify-text truncate">{p.uploaderName}</p>
                 {p.caption && <p className="text-xs text-spotify-gray truncate">{p.caption}</p>}
@@ -312,7 +312,7 @@ function GalleryTab({ photos, onShare }) {
       ) : (
         <div className={`grid gap-2 ${colsClass}`}>
           {photos.map((p) => (
-            <img key={p._id} src={p.watermarkedImageUrl} alt={p.caption || 'Photo'} className="rounded-lg object-cover aspect-square" />
+            <img key={p._id} src={mediaUrl(p.watermarkedImageUrl)} alt={p.caption || 'Photo'} className="rounded-lg object-cover aspect-square" />
           ))}
         </div>
       )}
@@ -478,7 +478,7 @@ export default function PortalHome() {
       {selectedAudio?.audioUrl && (
         <audio
           ref={audioRef}
-          src={selectedAudio.audioUrl}
+          src={mediaUrl(selectedAudio.audioUrl)}
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
           onEnded={() => setIsPlaying(false)}
@@ -523,7 +523,7 @@ export default function PortalHome() {
                           rel="noopener noreferrer"
                           className="shrink-0 w-72 rounded-lg overflow-hidden"
                         >
-                          <img src={ad.imageUrl} alt="Sponsor" className="w-full object-cover max-h-40" />
+                          <img src={mediaUrl(ad.imageUrl)} alt="Sponsor" className="w-full object-cover max-h-40" />
                         </a>
                       ))}
                     </div>
@@ -544,7 +544,7 @@ export default function PortalHome() {
                       className="shrink-0 w-32 flex flex-col gap-2 text-left active:opacity-80 transition"
                     >
                       {a.thumbnailUrl ? (
-                        <img src={a.thumbnailUrl} alt="" className="w-32 h-32 rounded-lg object-cover shadow-lg" />
+                        <img src={mediaUrl(a.thumbnailUrl)} alt="" className="w-32 h-32 rounded-lg object-cover shadow-lg" />
                       ) : (
                         <div className="w-32 h-32 rounded-lg flex items-center justify-center text-4xl shadow-lg" style={gradientStyle(theme)}>🙏</div>
                       )}
