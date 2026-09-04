@@ -8,7 +8,7 @@ router.use(requireSuperAdmin);
 
 router.get('/tenants', async (req, res, next) => {
   try {
-    const tenants = await Tenant.find().sort({ createdAt: -1 });
+    const tenants = await Tenant.find().sort({ createdAt: -1 }).limit(500);
     res.json(tenants);
   } catch (err) {
     next(err);

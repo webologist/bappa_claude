@@ -27,6 +27,8 @@ const audioContentSchema = new Schema({
   lyrics: { type: lyricsSchema, default: () => ({}) },
   isFeatured: { type: Boolean, default: false }
 }, { timestamps: true });
+// Matches the .find({tenant}).sort({isFeatured, createdAt}) used by both the admin and public audio lists.
+audioContentSchema.index({ tenant: 1, isFeatured: -1, createdAt: -1 });
 
 const eventSchema = new Schema({
   tenant: { type: Schema.Types.ObjectId, ref: 'Tenant', required: true, index: true },
@@ -35,6 +37,7 @@ const eventSchema = new Schema({
   startTime: { type: Date, required: true },
   endTime: { type: Date, required: true }
 }, { timestamps: true });
+eventSchema.index({ tenant: 1, startTime: 1 });
 
 const advertisementSchema = new Schema({
   tenant: { type: Schema.Types.ObjectId, ref: 'Tenant', required: true, index: true },
@@ -42,6 +45,7 @@ const advertisementSchema = new Schema({
   targetLink: { type: String, default: '', maxlength: 300 },
   isActive: { type: Boolean, default: true }
 }, { timestamps: true });
+advertisementSchema.index({ tenant: 1, isActive: 1, createdAt: -1 });
 
 const donationSchema = new Schema({
   tenant: { type: Schema.Types.ObjectId, ref: 'Tenant', required: true, index: true },
@@ -50,6 +54,7 @@ const donationSchema = new Schema({
   amount: { type: Number, required: true, min: 0 },
   status: { type: String, enum: ['PENDING', 'RECEIVED', 'REJECTED'], default: 'PENDING' }
 }, { timestamps: true });
+donationSchema.index({ tenant: 1, createdAt: -1 });
 
 const galleryPhotoSchema = new Schema({
   tenant: { type: Schema.Types.ObjectId, ref: 'Tenant', required: true, index: true },
@@ -61,6 +66,7 @@ const galleryPhotoSchema = new Schema({
   likeCount: { type: Number, default: 0 },
   viewCount: { type: Number, default: 0 }
 }, { timestamps: true });
+galleryPhotoSchema.index({ tenant: 1, status: 1, createdAt: -1 });
 
 const endUserSchema = new Schema({
   tenant: { type: Schema.Types.ObjectId, ref: 'Tenant', required: true, index: true },

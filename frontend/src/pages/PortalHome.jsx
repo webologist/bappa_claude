@@ -602,6 +602,17 @@ export default function PortalHome() {
 
         {tab === 'aarti' && (
           <>
+            <LyricsViewer
+              track={selectedAudio}
+              isPlaying={isPlaying}
+              currentTime={currentTime}
+              duration={duration}
+              onTogglePlay={togglePlay}
+              onSeek={seek}
+              theme={theme}
+              collapsed={aartiCollapsed}
+              onToggleCollapsed={() => setAartiCollapsed((c) => !c)}
+            />
             {audio.length > 1 && !aartiCollapsed && (
               <div className="relative">
                 <select
@@ -616,17 +627,6 @@ export default function PortalHome() {
                 <ChevronDownIcon className="w-4 h-4 text-spotify-gray absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
             )}
-            <LyricsViewer
-              track={selectedAudio}
-              isPlaying={isPlaying}
-              currentTime={currentTime}
-              duration={duration}
-              onTogglePlay={togglePlay}
-              onSeek={seek}
-              theme={theme}
-              collapsed={aartiCollapsed}
-              onToggleCollapsed={() => setAartiCollapsed((c) => !c)}
-            />
           </>
         )}
 

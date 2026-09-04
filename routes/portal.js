@@ -3,10 +3,16 @@ const crypto = require('crypto');
 const { AudioContent, Event, Advertisement, Donation, GalleryPhoto, EndUser, OtpCode } = require('../models/Schemas');
 const { resolveTenant } = require('../middleware/tenant');
 const { upload, fileUrl } = require('../middleware/upload');
-const { signToken, requireEndUser } = require('../middleware/auth');
+const { signToken, requireEndUser, END_USER_TOKEN_TTL_MS } = require('../middleware/auth');
+const { authLimiter } = require('../middleware/rateLimit');
 
 const router = express.Router({ mergeParams: true });
 router.use(resolveTenant);
+
+// Generous ceilings, not real pagination — these lists are naturally small
+// (one celebration's worth of content) but were previously fully unbounded,
+// so a bulk-inserted or scripted flood could still return an unbounded payload.
+const LIST_CAP = 200;
 
 router.get('/', (req, res) => {
   const { name, slug, logoUrl, theme } = req.tenant;
@@ -15,7 +21,7 @@ router.get('/', (req, res) => {
 
 router.get('/audio', async (req, res, next) => {
   try {
-    const audio = await AudioContent.find({ tenant: req.tenant._id }).sort({ isFeatured: -1, createdAt: -1 });
+    const audio = await AudioContent.find({ tenant: req.tenant._id }).sort({ isFeatured: -1, createdAt: -1 }).limit(LIST_CAP);
     res.json(audio);
   } catch (err) {
     next(err);
@@ -24,7 +30,7 @@ router.get('/audio', async (req, res, next) => {
 
 router.get('/events', async (req, res, next) => {
   try {
-    const events = await Event.find({ tenant: req.tenant._id }).sort({ startTime: 1 });
+    const events = await Event.find({ tenant: req.tenant._id }).sort({ startTime: 1 }).limit(LIST_CAP);
     res.json(events);
   } catch (err) {
     next(err);
@@ -33,7 +39,7 @@ router.get('/events', async (req, res, next) => {
 
 router.get('/advertisements', async (req, res, next) => {
   try {
-    const ads = await Advertisement.find({ tenant: req.tenant._id, isActive: true }).sort({ createdAt: -1 });
+    const ads = await Advertisement.find({ tenant: req.tenant._id, isActive: true }).sort({ createdAt: -1 }).limit(LIST_CAP);
     res.json(ads);
   } catch (err) {
     next(err);
@@ -55,7 +61,7 @@ function sendOtpSms(tenantSlug, phone, code) {
   console.log(`📱 [OTP] ${tenantSlug} → ${phone}: ${code} (expires in 5 min)`);
 }
 
-router.post('/auth/otp/request', async (req, res, next) => {
+router.post('/auth/otp/request', authLimiter, async (req, res, next) => {
   try {
     const phone = cleanPhone(req.body.phone);
     if (!/^[0-9]{7,15}$/.test(phone)) {
@@ -76,7 +82,7 @@ router.post('/auth/otp/request', async (req, res, next) => {
   }
 });
 
-router.post('/auth/otp/verify', async (req, res, next) => {
+router.post('/auth/otp/verify', authLimiter, async (req, res, next) => {
   try {
     const phone = cleanPhone(req.body.phone);
     const { code } = req.body;
@@ -101,7 +107,7 @@ router.post('/auth/otp/verify', async (req, res, next) => {
 
     const existing = await EndUser.findOne({ tenant: req.tenant._id, phone });
     if (existing) {
-      const token = signToken({ role: 'end-user', tenantSlug: req.tenant.slug, phone, userId: existing._id.toString() });
+      const token = signToken({ role: 'end-user', tenantSlug: req.tenant.slug, phone, userId: existing._id.toString() }, END_USER_TOKEN_TTL_MS);
       return res.json({ status: 'existing', token, user: existing });
     }
     res.json({ status: 'new' });
@@ -110,7 +116,7 @@ router.post('/auth/otp/verify', async (req, res, next) => {
   }
 });
 
-router.post('/auth/register', async (req, res, next) => {
+router.post('/auth/register', authLimiter, async (req, res, next) => {
   try {
     const phone = cleanPhone(req.body.phone);
     const { firstName, lastName, address, sex, age, reference } = req.body;
@@ -129,7 +135,7 @@ router.post('/auth/register', async (req, res, next) => {
     );
     await OtpCode.deleteOne({ _id: otp._id });
 
-    const token = signToken({ role: 'end-user', tenantSlug: req.tenant.slug, phone, userId: user._id.toString() });
+    const token = signToken({ role: 'end-user', tenantSlug: req.tenant.slug, phone, userId: user._id.toString() }, END_USER_TOKEN_TTL_MS);
     res.status(201).json({ token, user });
   } catch (err) {
     next(err);
@@ -139,8 +145,13 @@ router.post('/auth/register', async (req, res, next) => {
 
 router.post('/donations', requireEndUser, async (req, res, next) => {
   try {
-    const { amount } = req.body;
-    if (!amount) return res.status(400).json({ error: 'Amount is required' });
+    const amount = Number(req.body.amount);
+    // Number(...) on '', null, or a non-numeric string yields NaN, which the schema's
+    // `min: 0` validator does not catch (NaN fails every comparison, so Mongoose's
+    // min-check silently passes it through) — reject it explicitly here instead.
+    if (!Number.isFinite(amount) || amount <= 0 || amount > 10000000) {
+      return res.status(400).json({ error: 'Enter a valid donation amount' });
+    }
     const user = await EndUser.findById(req.endUser.userId);
     if (!user) return res.status(401).json({ error: 'Please verify your mobile number again' });
 
@@ -148,7 +159,7 @@ router.post('/donations', requireEndUser, async (req, res, next) => {
       tenant: req.tenant._id,
       donorName: `${user.firstName} ${user.lastName}`,
       donorPhone: user.phone,
-      amount: Number(amount)
+      amount
     });
     req.io.to(req.tenant.slug).emit('donation-update', donation);
     res.status(201).json(donation);
@@ -159,7 +170,7 @@ router.post('/donations', requireEndUser, async (req, res, next) => {
 
 router.get('/gallery', async (req, res, next) => {
   try {
-    const photos = await GalleryPhoto.find({ tenant: req.tenant._id, status: 'APPROVED' }).sort({ createdAt: -1 });
+    const photos = await GalleryPhoto.find({ tenant: req.tenant._id, status: 'APPROVED' }).sort({ createdAt: -1 }).limit(LIST_CAP);
     res.json(photos);
   } catch (err) {
     next(err);
@@ -187,7 +198,7 @@ router.post('/gallery/upload', requireEndUser, upload.single('image'), async (re
   }
 });
 
-router.post('/gallery/:id/like', async (req, res, next) => {
+router.post('/gallery/:id/like', requireEndUser, async (req, res, next) => {
   try {
     const photo = await GalleryPhoto.findOneAndUpdate(
       { _id: req.params.id, tenant: req.tenant._id, status: 'APPROVED' },

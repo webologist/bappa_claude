@@ -19,14 +19,27 @@ const storage = multer.diskStorage({
   }
 });
 
+// Explicit allowlist rather than the "image/*" wildcard — that wildcard also matches
+// image/svg+xml, and an uploaded SVG can carry a <script> that executes if the file is
+// ever opened directly (not just embedded in an <img>), which would run in this app's
+// own origin. Raster formats only.
+const ALLOWED_MIME_TYPES = new Set([
+  'image/jpeg', 'image/png', 'image/webp', 'image/gif',
+  'audio/mpeg', 'audio/mp4', 'audio/ogg', 'audio/wav', 'audio/webm', 'audio/x-m4a',
+  // Phones/browsers sometimes tag an audio-only .mp4/.m4a recording as video/mp4 —
+  // still played back as audio-only on the client.
+  'video/mp4'
+]);
+
 const upload = multer({
   storage,
   limits: { fileSize: MAX_FILE_SIZE },
   fileFilter: (req, file, cb) => {
-    // Accept video/mp4 too — phones/browsers sometimes tag an audio-only .mp4/.m4a
-    // recording that way, and it's still played back as audio-only on the client.
-    const allowed = /^(image|audio)\//.test(file.mimetype) || file.mimetype === 'video/mp4';
-    if (!allowed) return cb(new Error('Only image or audio files are allowed'));
+    if (!ALLOWED_MIME_TYPES.has(file.mimetype)) {
+      const err = new Error('Only JPG/PNG/WebP/GIF images or MP3/MP4/WAV/OGG audio are allowed');
+      err.status = 400;
+      return cb(err);
+    }
     cb(null, true);
   }
 });

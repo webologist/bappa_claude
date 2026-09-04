@@ -59,6 +59,16 @@ export default function LyricsViewer({ track, isPlaying, currentTime, duration, 
 
   return (
     <div className="flex flex-col gap-3">
+      <div
+        ref={lyricsRef}
+        className={`whitespace-pre-wrap leading-relaxed text-spotify-text font-medium overflow-y-auto pb-10 pt-1 ${
+          collapsed ? 'min-h-[72vh] max-h-[82vh]' : 'min-h-[55vh] max-h-[68vh]'
+        }`}
+        style={{ fontSize: `${fontSize}px` }}
+      >
+        {text}
+      </div>
+
       <div className="flex items-center gap-3">
         {!collapsed && (
           track.thumbnailUrl ? (
@@ -159,16 +169,6 @@ export default function LyricsViewer({ track, isPlaying, currentTime, duration, 
           </div>
         </div>
       )}
-
-      <div
-        ref={lyricsRef}
-        className={`whitespace-pre-wrap leading-relaxed text-spotify-text font-medium overflow-y-auto pb-10 pt-1 ${
-          collapsed ? 'min-h-[72vh] max-h-[82vh]' : 'min-h-[55vh] max-h-[68vh]'
-        }`}
-        style={{ fontSize: `${fontSize}px` }}
-      >
-        {text}
-      </div>
     </div>
   );
 }

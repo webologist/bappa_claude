@@ -7,6 +7,9 @@ const { upload, fileUrl } = require('../middleware/upload');
 const router = express.Router({ mergeParams: true });
 router.use(resolveTenant, requirePortalAdmin);
 
+// Same rationale as the public portal routes: these lists were fully unbounded.
+const LIST_CAP = 500;
+
 // Generic upload used by audio / advertisement / branding forms
 router.post('/upload', upload.single('file'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
@@ -39,7 +42,7 @@ router.patch('/branding', async (req, res, next) => {
 // Audio content
 router.get('/audio', async (req, res, next) => {
   try {
-    const audio = await AudioContent.find({ tenant: req.tenant._id }).sort({ createdAt: -1 });
+    const audio = await AudioContent.find({ tenant: req.tenant._id }).sort({ createdAt: -1 }).limit(LIST_CAP);
     res.json(audio);
   } catch (err) {
     next(err);
@@ -95,7 +98,7 @@ router.delete('/audio/:id', async (req, res, next) => {
 // Events / program calendar
 router.get('/events', async (req, res, next) => {
   try {
-    const events = await Event.find({ tenant: req.tenant._id }).sort({ startTime: 1 });
+    const events = await Event.find({ tenant: req.tenant._id }).sort({ startTime: 1 }).limit(LIST_CAP);
     res.json(events);
   } catch (err) {
     next(err);
@@ -145,7 +148,7 @@ router.delete('/events/:id', async (req, res, next) => {
 // Advertisements
 router.get('/advertisements', async (req, res, next) => {
   try {
-    const ads = await Advertisement.find({ tenant: req.tenant._id }).sort({ createdAt: -1 });
+    const ads = await Advertisement.find({ tenant: req.tenant._id }).sort({ createdAt: -1 }).limit(LIST_CAP);
     res.json(ads);
   } catch (err) {
     next(err);
@@ -192,7 +195,7 @@ router.delete('/advertisements/:id', async (req, res, next) => {
 // Donations
 router.get('/donations', async (req, res, next) => {
   try {
-    const donations = await Donation.find({ tenant: req.tenant._id }).sort({ createdAt: -1 });
+    const donations = await Donation.find({ tenant: req.tenant._id }).sort({ createdAt: -1 }).limit(LIST_CAP);
     res.json(donations);
   } catch (err) {
     next(err);
@@ -219,7 +222,7 @@ router.patch('/donations/:id', async (req, res, next) => {
 // Gallery moderation
 router.get('/gallery', async (req, res, next) => {
   try {
-    const photos = await GalleryPhoto.find({ tenant: req.tenant._id }).sort({ createdAt: -1 });
+    const photos = await GalleryPhoto.find({ tenant: req.tenant._id }).sort({ createdAt: -1 }).limit(LIST_CAP);
     res.json(photos);
   } catch (err) {
     next(err);
@@ -246,6 +249,9 @@ router.patch('/gallery/:id', async (req, res, next) => {
 // Aarti alert trigger
 router.post('/aarti/trigger', (req, res) => {
   const { message } = req.body;
+  if (message !== undefined && (typeof message !== 'string' || message.length > 300)) {
+    return res.status(400).json({ error: 'Message must be a string under 300 characters' });
+  }
   const payload = {
     message: message || `🙏 Aarti time at ${req.tenant.name}!`,
     triggeredAt: new Date().toISOString()
