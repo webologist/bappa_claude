@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Environment & secrets
+.env
+.env.*
+
+# Build output
+frontend/dist/
+
+# Runtime / user-generated content
+uploads/
+
+# Logs
+*.log
+
+# Dev scratch
+scripts/mongo.log
+scripts/fixtures/
+
+# OS
+.DS_Store
+Thumbs.db
